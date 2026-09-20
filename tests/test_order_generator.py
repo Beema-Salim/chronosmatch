@@ -17,3 +17,21 @@ def test_order_ids_increment():
 
     assert first.order_id == 100
     assert second.order_id == 101
+
+
+def test_generate_buy_order():
+    generator = OrderGenerator()
+
+    order = generator.generate("BUY")
+
+    assert order.side == "BUY"
+    assert order.is_valid()
+
+
+def test_generate_sell_order():
+    generator = OrderGenerator()
+
+    order = generator.generate("SELL")
+
+    assert order.side == "SELL"
+    assert order.is_valid()
