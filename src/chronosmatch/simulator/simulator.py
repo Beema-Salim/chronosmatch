@@ -1,6 +1,10 @@
 import asyncio
+import logging
 
 from .order_generator import OrderGenerator
+
+
+logger = logging.getLogger(__name__)
 
 
 class MarketSimulator:
@@ -20,5 +24,13 @@ class MarketSimulator:
     async def generate_orders(self, count: int):
         """Generate a fixed number of mock market orders."""
         for _ in range(count):
-            yield self.generator.generate()
+            order = self.generator.generate()
+            logger.info(
+                "Generated order: id=%s side=%s price=%.2f quantity=%s",
+                order.order_id,
+                order.side,
+                order.price,
+                order.quantity,
+            )
+            yield order
             await asyncio.sleep(self.order_interval)
