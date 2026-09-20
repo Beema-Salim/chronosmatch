@@ -32,3 +32,22 @@ def test_simulator_generates_unique_order_ids():
         assert order_ids == [1, 2, 3]
 
     asyncio.run(run_test())
+
+
+def test_set_order_rate():
+    simulator = MarketSimulator()
+
+    simulator.set_order_rate(100)
+
+    assert simulator.order_interval == 0.01
+
+
+def test_set_order_rate_rejects_zero():
+    simulator = MarketSimulator()
+
+    try:
+        simulator.set_order_rate(0)
+    except ValueError:
+        assert True
+    else:
+        assert False
