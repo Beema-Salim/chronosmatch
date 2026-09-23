@@ -42,3 +42,10 @@ class LimitOrderBook:
     def best_ask(self) -> float | None:
         """Return the lowest SELL price."""
         return min(self.asks) if self.asks else None
+
+    def best_ask_orders(self) -> list[Order]:
+        """Return SELL orders at the lowest ask price."""
+        if not self.asks:
+            return []
+
+        return list(self.asks[self.best_ask()])

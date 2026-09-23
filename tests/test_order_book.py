@@ -112,3 +112,52 @@ def test_best_bid_orders_returns_multiple_orders_at_same_price():
     orders = book.best_bid_orders()
 
     assert orders == [first_order, second_order]
+
+def test_best_ask_orders_returns_orders_at_lowest_price():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=102.00,
+        quantity=10,
+        side="SELL",
+    )
+
+    best_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="SELL",
+    )
+
+    book.add_order(first_order)
+    book.add_order(best_order)
+
+    orders = book.best_ask_orders()
+
+    assert orders == [best_order]
+
+
+def test_best_ask_orders_returns_multiple_orders_at_same_price():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="SELL",
+    )
+
+    second_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="SELL",
+    )
+
+    book.add_order(first_order)
+    book.add_order(second_order)
+
+    orders = book.best_ask_orders()
+
+    assert orders == [first_order, second_order]
