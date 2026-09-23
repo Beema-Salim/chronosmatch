@@ -161,3 +161,29 @@ def test_best_ask_orders_returns_multiple_orders_at_same_price():
     orders = book.best_ask_orders()
 
     assert orders == [first_order, second_order]
+
+def test_pop_best_bid_order_respects_time_priority():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    second_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="BUY",
+    )
+
+    book.add_order(first_order)
+    book.add_order(second_order)
+
+    popped_order = book.pop_best_bid_order()
+
+    assert popped_order == first_order
+    assert book.bid_count() == 1
+    assert book.best_bid_orders() == [second_order]

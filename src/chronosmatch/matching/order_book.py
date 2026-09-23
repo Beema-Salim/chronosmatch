@@ -38,6 +38,22 @@ class LimitOrderBook:
             return []
 
         return list(self.bids[self.best_bid()])
+    
+    def pop_best_bid_order(self) -> Order | None:
+        """Remove and return the oldest BUY order at the best bid."""
+        if not self.bids:
+            return None
+
+        best_price = self.best_bid()
+        orders = self.bids[best_price]
+
+        order = orders.popleft()
+
+        if not orders:
+            del self.bids[best_price]
+
+        return order
+
 
     def best_ask(self) -> float | None:
         """Return the lowest SELL price."""
