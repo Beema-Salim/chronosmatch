@@ -63,3 +63,52 @@ def test_empty_order_book_has_no_best_prices():
 
     assert book.best_bid() is None
     assert book.best_ask() is None
+
+def test_best_bid_orders_returns_orders_at_highest_price():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=100.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    best_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="BUY",
+    )
+
+    book.add_order(first_order)
+    book.add_order(best_order)
+
+    orders = book.best_bid_orders()
+
+    assert orders == [best_order]
+
+
+def test_best_bid_orders_returns_multiple_orders_at_same_price():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    second_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="BUY",
+    )
+
+    book.add_order(first_order)
+    book.add_order(second_order)
+
+    orders = book.best_bid_orders()
+
+    assert orders == [first_order, second_order]

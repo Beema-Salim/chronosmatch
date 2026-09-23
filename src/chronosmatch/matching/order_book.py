@@ -32,6 +32,13 @@ class LimitOrderBook:
         """Return the highest BUY price."""
         return max(self.bids) if self.bids else None
 
+    def best_bid_orders(self) -> list[Order]:
+        """Return BUY orders at the highest bid price."""
+        if not self.bids:
+            return []
+
+        return list(self.bids[self.best_bid()])
+
     def best_ask(self) -> float | None:
         """Return the lowest SELL price."""
         return min(self.asks) if self.asks else None
