@@ -187,3 +187,81 @@ def test_pop_best_bid_order_respects_time_priority():
     assert popped_order == first_order
     assert book.bid_count() == 1
     assert book.best_bid_orders() == [second_order]
+
+def test_match_orders_when_prices_cross():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_orders()
+
+    assert match == (buy_order, sell_order)
+    assert book.bid_count() == 0
+    assert book.ask_count() == 0
+
+
+def test_match_orders_when_prices_are_equal():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=100.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_orders()
+
+    assert match == (buy_order, sell_order)
+
+
+def test_match_orders_returns_none_when_prices_do_not_cross():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=99.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_orders()
+
+    assert match is None
+    assert book.bid_count() == 1
+    assert book.ask_count() == 1
