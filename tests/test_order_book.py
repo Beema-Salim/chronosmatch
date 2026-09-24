@@ -1,6 +1,6 @@
 from chronosmatch.matching.order_book import LimitOrderBook
 from chronosmatch.simulator.order import Order
-
+from chronosmatch.matching.trade import Trade
 
 def test_order_book_adds_buy_order():
     book = LimitOrderBook()
@@ -347,3 +347,28 @@ def test_full_match_removes_both_orders():
     assert match == (buy_order, sell_order, 5)
     assert book.bid_count() == 0
     assert book.ask_count() == 0
+
+def test_trade_contains_execution_details():
+    trade = Trade(
+        buy_order_id=1,
+        sell_order_id=2,
+        price=100.50,
+        quantity=5,
+    )
+
+    assert trade.buy_order_id == 1
+    assert trade.sell_order_id == 2
+    assert trade.price == 100.50
+    assert trade.quantity == 5
+    assert trade.is_valid()
+
+
+def test_trade_rejects_invalid_execution_data():
+    trade = Trade(
+        buy_order_id=0,
+        sell_order_id=2,
+        price=100.50,
+        quantity=5,
+    )
+
+    assert not trade.is_valid()
