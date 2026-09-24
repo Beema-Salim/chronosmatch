@@ -265,3 +265,85 @@ def test_match_orders_returns_none_when_prices_do_not_cross():
     assert match is None
     assert book.bid_count() == 1
     assert book.ask_count() == 1
+
+def test_partial_match_reduces_buy_quantity():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=4,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (buy_order, sell_order, 4)
+    assert buy_order.quantity == 6
+    assert book.bid_count() == 1
+    assert book.ask_count() == 0
+
+
+def test_partial_match_reduces_sell_quantity():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=4,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=10,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (buy_order, sell_order, 4)
+    assert sell_order.quantity == 6
+    assert book.bid_count() == 0
+    assert book.ask_count() == 1
+
+
+def test_full_match_removes_both_orders():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (buy_order, sell_order, 5)
+    assert book.bid_count() == 0
+    assert book.ask_count() == 0

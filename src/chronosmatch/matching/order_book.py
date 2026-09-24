@@ -74,6 +74,42 @@ class LimitOrderBook:
             del self.asks[best_ask]
 
         return buy_order, sell_order
+
+    def match_with_quantity(self) -> tuple[Order, Order, int] | None:
+        """Match the best BUY and SELL orders and return traded quantity."""
+        if not self.bids or not self.asks:
+            return None
+
+        best_bid = self.best_bid()
+        best_ask = self.best_ask()
+
+        if best_bid < best_ask:
+            return None
+
+        buy_order = self.bids[best_bid][0]
+        sell_order = self.asks[best_ask][0]
+
+        traded_quantity = min(
+            buy_order.quantity,
+            sell_order.quantity,
+        )
+
+        buy_order.quantity -= traded_quantity
+        sell_order.quantity -= traded_quantity
+
+        if buy_order.quantity == 0:
+            self.bids[best_bid].popleft()
+
+            if not self.bids[best_bid]:
+                del self.bids[best_bid]
+
+        if sell_order.quantity == 0:
+            self.asks[best_ask].popleft()
+
+            if not self.asks[best_ask]:
+                del self.asks[best_ask]
+
+        return buy_order, sell_order, traded_quantity
     
     def best_ask(self) -> float | None:
         """Return the lowest SELL price."""
