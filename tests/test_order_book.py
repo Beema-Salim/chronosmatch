@@ -372,3 +372,73 @@ def test_trade_rejects_invalid_execution_data():
     )
 
     assert not trade.is_valid()
+
+def test_multiple_orders_match_in_price_time_priority():
+    book = LimitOrderBook()
+
+    first_buy = Order(
+        order_id=1,
+        price=101.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    second_buy = Order(
+        order_id=2,
+        price=102.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=3,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(first_buy)
+    book.add_order(second_buy)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (second_buy, sell_order, 5)
+    assert book.bid_count() == 1
+    assert book.best_bid() == 101.00
+    assert book.ask_count() == 0
+
+
+def test_same_price_orders_match_in_fifo_order():
+    book = LimitOrderBook()
+
+    first_buy = Order(
+        order_id=1,
+        price=101.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    second_buy = Order(
+        order_id=2,
+        price=101.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=3,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(first_buy)
+    book.add_order(second_buy)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (first_buy, sell_order, 5)
+    assert book.bid_count() == 1
+    assert book.best_bid_orders() == [second_buy]
