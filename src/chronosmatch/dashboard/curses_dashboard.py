@@ -9,19 +9,33 @@ class CursesDashboard:
         self.running = True
         self.best_bid: float | None = None
         self.best_ask: float | None = None
+        self.orders_processed = 0
+        self.trades_executed = 0
 
-    def update_market(self, best_bid: float | None, best_ask: float | None) -> None:
+    def update_market(
+        self,
+        best_bid: float | None,
+        best_ask: float | None,
+    ) -> None:
         """Update the current best bid and ask prices."""
         self.best_bid = best_bid
         self.best_ask = best_ask
+
+    def record_order(self) -> None:
+        """Record a processed order."""
+        self.orders_processed += 1
+
+    def record_trade(self) -> None:
+        """Record an executed trade."""
+        self.trades_executed += 1
 
     def draw(self, stdscr) -> None:
         """Render the dashboard screen."""
         stdscr.clear()
         stdscr.addstr(1, 2, "ChronosMatch Dashboard")
         stdscr.addstr(3, 2, "Status: RUNNING")
-        stdscr.addstr(4, 2, "Orders Processed: 0")
-        stdscr.addstr(5, 2, "Trades Executed: 0")
+        stdscr.addstr(4, 2, f"Orders Processed: {self.orders_processed}")
+        stdscr.addstr(5, 2, f"Trades Executed: {self.trades_executed}")
 
         bid = "--" if self.best_bid is None else f"{self.best_bid:.2f}"
         ask = "--" if self.best_ask is None else f"{self.best_ask:.2f}"
