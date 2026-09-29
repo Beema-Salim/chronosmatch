@@ -3,10 +3,17 @@ import time
 
 
 class CursesDashboard:
-    """Simple terminal dashboard for ChronosMatch."""
+    """Terminal dashboard for ChronosMatch."""
 
     def __init__(self) -> None:
         self.running = True
+        self.best_bid: float | None = None
+        self.best_ask: float | None = None
+
+    def update_market(self, best_bid: float | None, best_ask: float | None) -> None:
+        """Update the current best bid and ask prices."""
+        self.best_bid = best_bid
+        self.best_ask = best_ask
 
     def draw(self, stdscr) -> None:
         """Render the dashboard screen."""
@@ -15,8 +22,12 @@ class CursesDashboard:
         stdscr.addstr(3, 2, "Status: RUNNING")
         stdscr.addstr(4, 2, "Orders Processed: 0")
         stdscr.addstr(5, 2, "Trades Executed: 0")
-        stdscr.addstr(6, 2, "Best Bid: --")
-        stdscr.addstr(7, 2, "Best Ask: --")
+
+        bid = "--" if self.best_bid is None else f"{self.best_bid:.2f}"
+        ask = "--" if self.best_ask is None else f"{self.best_ask:.2f}"
+
+        stdscr.addstr(6, 2, f"Best Bid: {bid}")
+        stdscr.addstr(7, 2, f"Best Ask: {ask}")
         stdscr.addstr(9, 2, "Press Q to exit.")
         stdscr.refresh()
 
