@@ -1,0 +1,444 @@
+from chronosmatch.matching.order_book import LimitOrderBook
+from chronosmatch.simulator.order import Order
+from chronosmatch.matching.trade import Trade
+
+def test_order_book_adds_buy_order():
+    book = LimitOrderBook()
+
+    order = Order(
+        order_id=1,
+        price=100.50,
+        quantity=10,
+        side="BUY",
+    )
+
+    book.add_order(order)
+
+    assert book.bid_count() == 1
+    assert book.ask_count() == 0
+    assert book.best_bid() == 100.50
+
+
+def test_order_book_adds_sell_order():
+    book = LimitOrderBook()
+
+    order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(order)
+
+    assert book.bid_count() == 0
+    assert book.ask_count() == 1
+    assert book.best_ask() == 101.00
+
+
+def test_order_book_tracks_multiple_price_levels():
+    book = LimitOrderBook()
+
+    book.add_order(
+        Order(order_id=1, price=100.00, quantity=10, side="BUY")
+    )
+    book.add_order(
+        Order(order_id=2, price=101.00, quantity=20, side="BUY")
+    )
+    book.add_order(
+        Order(order_id=3, price=102.00, quantity=15, side="SELL")
+    )
+    book.add_order(
+        Order(order_id=4, price=101.50, quantity=5, side="SELL")
+    )
+
+    assert book.bid_count() == 2
+    assert book.ask_count() == 2
+    assert book.best_bid() == 101.00
+    assert book.best_ask() == 101.50
+
+
+def test_empty_order_book_has_no_best_prices():
+    book = LimitOrderBook()
+
+    assert book.best_bid() is None
+    assert book.best_ask() is None
+
+def test_best_bid_orders_returns_orders_at_highest_price():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=100.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    best_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="BUY",
+    )
+
+    book.add_order(first_order)
+    book.add_order(best_order)
+
+    orders = book.best_bid_orders()
+
+    assert orders == [best_order]
+
+
+def test_best_bid_orders_returns_multiple_orders_at_same_price():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    second_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="BUY",
+    )
+
+    book.add_order(first_order)
+    book.add_order(second_order)
+
+    orders = book.best_bid_orders()
+
+    assert orders == [first_order, second_order]
+
+def test_best_ask_orders_returns_orders_at_lowest_price():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=102.00,
+        quantity=10,
+        side="SELL",
+    )
+
+    best_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="SELL",
+    )
+
+    book.add_order(first_order)
+    book.add_order(best_order)
+
+    orders = book.best_ask_orders()
+
+    assert orders == [best_order]
+
+
+def test_best_ask_orders_returns_multiple_orders_at_same_price():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="SELL",
+    )
+
+    second_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="SELL",
+    )
+
+    book.add_order(first_order)
+    book.add_order(second_order)
+
+    orders = book.best_ask_orders()
+
+    assert orders == [first_order, second_order]
+
+def test_pop_best_bid_order_respects_time_priority():
+    book = LimitOrderBook()
+
+    first_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    second_order = Order(
+        order_id=2,
+        price=101.00,
+        quantity=20,
+        side="BUY",
+    )
+
+    book.add_order(first_order)
+    book.add_order(second_order)
+
+    popped_order = book.pop_best_bid_order()
+
+    assert popped_order == first_order
+    assert book.bid_count() == 1
+    assert book.best_bid_orders() == [second_order]
+
+def test_match_orders_when_prices_cross():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_orders()
+
+    assert match == (buy_order, sell_order)
+    assert book.bid_count() == 0
+    assert book.ask_count() == 0
+
+
+def test_match_orders_when_prices_are_equal():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=100.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_orders()
+
+    assert match == (buy_order, sell_order)
+
+
+def test_match_orders_returns_none_when_prices_do_not_cross():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=99.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_orders()
+
+    assert match is None
+    assert book.bid_count() == 1
+    assert book.ask_count() == 1
+
+def test_partial_match_reduces_buy_quantity():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=10,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=4,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (buy_order, sell_order, 4)
+    assert buy_order.quantity == 6
+    assert book.bid_count() == 1
+    assert book.ask_count() == 0
+
+
+def test_partial_match_reduces_sell_quantity():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=4,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=10,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (buy_order, sell_order, 4)
+    assert sell_order.quantity == 6
+    assert book.bid_count() == 0
+    assert book.ask_count() == 1
+
+
+def test_full_match_removes_both_orders():
+    book = LimitOrderBook()
+
+    buy_order = Order(
+        order_id=1,
+        price=101.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=2,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(buy_order)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (buy_order, sell_order, 5)
+    assert book.bid_count() == 0
+    assert book.ask_count() == 0
+
+def test_trade_contains_execution_details():
+    trade = Trade(
+        buy_order_id=1,
+        sell_order_id=2,
+        price=100.50,
+        quantity=5,
+    )
+
+    assert trade.buy_order_id == 1
+    assert trade.sell_order_id == 2
+    assert trade.price == 100.50
+    assert trade.quantity == 5
+    assert trade.is_valid()
+
+
+def test_trade_rejects_invalid_execution_data():
+    trade = Trade(
+        buy_order_id=0,
+        sell_order_id=2,
+        price=100.50,
+        quantity=5,
+    )
+
+    assert not trade.is_valid()
+
+def test_multiple_orders_match_in_price_time_priority():
+    book = LimitOrderBook()
+
+    first_buy = Order(
+        order_id=1,
+        price=101.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    second_buy = Order(
+        order_id=2,
+        price=102.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=3,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(first_buy)
+    book.add_order(second_buy)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (second_buy, sell_order, 5)
+    assert book.bid_count() == 1
+    assert book.best_bid() == 101.00
+    assert book.ask_count() == 0
+
+
+def test_same_price_orders_match_in_fifo_order():
+    book = LimitOrderBook()
+
+    first_buy = Order(
+        order_id=1,
+        price=101.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    second_buy = Order(
+        order_id=2,
+        price=101.00,
+        quantity=5,
+        side="BUY",
+    )
+
+    sell_order = Order(
+        order_id=3,
+        price=100.00,
+        quantity=5,
+        side="SELL",
+    )
+
+    book.add_order(first_buy)
+    book.add_order(second_buy)
+    book.add_order(sell_order)
+
+    match = book.match_with_quantity()
+
+    assert match == (first_buy, sell_order, 5)
+    assert book.bid_count() == 1
+    assert book.best_bid_orders() == [second_buy]
